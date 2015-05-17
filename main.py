@@ -24,7 +24,6 @@ class RenderArea(QtGui.QWidget):
         self.drag_offset = QtCore.QPoint()
 
     def paintEvent(self, event):
-
         p_block = QtGui.QPainter(self)
         p_block.setPen(style.blockStyle())
         p_block.setRenderHint(QtGui.QPainter.Antialiasing)
@@ -32,12 +31,6 @@ class RenderArea(QtGui.QWidget):
             p_block.drawRect(block.rect)
             p_block.drawText(block.textPos, block.named, 
                 block.textOpt)
-
-        # p_text = QtGui.QPainter(self)
-        # p_text.setPen(style.textStyle())
-        # p_text.setBrush(QtGui.QBrush(QtCore.Qt.black))
-        # p_text.setRenderHint(QtGui.QPainter.Antialiasing)
-        # p_text.drawPath(self.blocks[0].named)
 
     def mousePressEvent(self, event):
         for block in self.blocks:
@@ -50,7 +43,6 @@ class RenderArea(QtGui.QWidget):
             self.dragging = None
 
     def mouseMoveEvent(self, event):
-    
         if self.dragging is None:
             return
 
@@ -71,9 +63,6 @@ class logicBlock():
         self.named = named
         self.textPos = QtCore.QRectF(x, y+h, w, 15)
         self.textOpt = QtGui.QTextOption(QtCore.Qt.AlignHCenter)
-        # font = QtGui.QFont()
-        # font.setPixelSize(15)
-        # self.named.addText(x, y+h+15, font, named)
 
 
 class App(QtGui.QWidget):
@@ -81,19 +70,13 @@ class App(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
 
         self.mousePressed = False
-
         self.setFixedSize(640, 480)
         self.setWindowTitle("Signal generator")
-
         self.blocks = []
-
         self.renderArea = RenderArea(self.blocks)
-
         mainLayout = QtGui.QGridLayout()
         mainLayout.addWidget(self.renderArea, 0, 0, 1, 1)
-
         self.setLayout(mainLayout)
-
 
         self.dev()
 
