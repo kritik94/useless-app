@@ -1,9 +1,11 @@
 import sys
 from PyQt4 import QtGui, QtCore
+import customStyle as style
+
 
 class RenderArea(QtGui.QWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, blocks, parent=None):
         super(RenderArea, self).__init__(parent)
 
         self.pen = QtGui.QPen()
@@ -13,26 +15,66 @@ class RenderArea(QtGui.QWidget):
         self.setAutoFillBackground(True)
 
         self.points = [
-            QtCore.QPoint(0, 212),
-            QtCore.QPoint(622, 212)
+            QtCore.QPoint(0, 200),
+            QtCore.QPoint(622, 200)
         ]
-        self.path = QtGui.QPainterPath()
-        self.path.moveTo(0, 212)
-        self.path.lineTo(620, 212)
+
+        self.blocks = blocks
+        self.dragging = None
+        self.drag_offset = QtCore.QPoint()
 
     def paintEvent(self, event):
-        painter = QtGui.QPainter(self)
-        pen = QtGui.QPen()
-        pen.setStyle(QtCore.Qt.SolidLine)
-        pen.setWidth(2)
-        pen.setColor (QtCore.Qt.blue)
-        pen.setCapStyle(QtCore.Qt.RoundCap)
-        pen.setJoinStyle(QtCore.Qt.RoundJoin)
-        painter.setPen(pen)
-        painter.setBrush(QtCore.Qt.NoBrush)
-        painter.drawPath(self.path)
 
-        painter.restore()
+        p_block = QtGui.QPainter(self)
+        p_block.setPen(style.blockStyle())
+        p_block.setRenderHint(QtGui.QPainter.Antialiasing)
+        for block in self.blocks:
+            p_block.drawRect(block.rect)
+            p_block.drawText(block.textPos, block.named, 
+                block.textOpt)
+
+        # p_text = QtGui.QPainter(self)
+        # p_text.setPen(style.textStyle())
+        # p_text.setBrush(QtGui.QBrush(QtCore.Qt.black))
+        # p_text.setRenderHint(QtGui.QPainter.Antialiasing)
+        # p_text.drawPath(self.blocks[0].named)
+
+    def mousePressEvent(self, event):
+        for block in self.blocks:
+            if block.rect.contains(event.pos()):
+                self.dragging = block
+                self.drag_offset = block.rect.topLeft() - event.pos()
+                break
+        else:
+            print('No')
+            self.dragging = None
+
+    def mouseMoveEvent(self, event):
+    
+        if self.dragging is None:
+            return
+
+        point = event.pos() + self.drag_offset
+        self.dragging.rect.moveTo(point)
+        point += QtCore.QPointF(0, self.dragging.rect.height())
+        self.dragging.textPos.moveTo(point)
+
+        self.update()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = None
+
+
+class logicBlock():
+    def __init__(self, x, y, w, h, named="Basic"):
+        self.rect = QtCore.QRectF(x, y, w, h)
+        self.named = named
+        self.textPos = QtCore.QRectF(x, y+h, w, 15)
+        self.textOpt = QtGui.QTextOption(QtCore.Qt.AlignHCenter)
+        # font = QtGui.QFont()
+        # font.setPixelSize(15)
+        # self.named.addText(x, y+h+15, font, named)
+
 
 class App(QtGui.QWidget):
     def __init__(self, parent=None):
@@ -43,20 +85,23 @@ class App(QtGui.QWidget):
         self.setFixedSize(640, 480)
         self.setWindowTitle("Signal generator")
 
-        self.renderArea = RenderArea()
-        self.numberOfPoints = QtGui.QSpinBox()
-        self.numberOfPoints.setRange(2, 32)
-        self.numberOfPoints.setSpecialValueText("2")
-        self.updatePointButton = QtGui.QPushButton("Изменить количество точек", self)
-        self.resultField = QtGui.QLineEdit()
-        self.resultField.setReadOnly(True)
+        self.blocks = []
+
+        self.renderArea = RenderArea(self.blocks)
 
         mainLayout = QtGui.QGridLayout()
-        mainLayout.addWidget(self.renderArea, 0, 0, 1, 4)
-        mainLayout.addWidget(self.numberOfPoints, 2, 0)
-        mainLayout.addWidget(self.updatePointButton, 2, 1)
-        mainLayout.addWidget(self.resultField, 2, 2)
+        mainLayout.addWidget(self.renderArea, 0, 0, 1, 1)
+
         self.setLayout(mainLayout)
+
+
+        self.dev()
+
+    def dev(self):
+        self.blocks.append(logicBlock(100, 100, 50, 50, 'Based1'))
+        self.blocks.append(logicBlock(100, 200, 50, 50, 'Based2'))
+        self.blocks.append(logicBlock(200, 100, 50, 50, 'Based3'))
+        self.blocks.append(logicBlock(200, 200, 50, 50, 'Based4'))
 
 
 
